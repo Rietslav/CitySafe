@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Report {
+  id          Int             @id @default(autoincrement())
+  title       String
+  description String?
+  cityId      Int
+  categoryId  Int
+  status      ReportStatus    @default(NEW)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  city        City            @relation(fields: [cityId], references: [id])
+  category    Category        @relation(fields: [categoryId], references: [id])
+  statusLogs  StatusHistory[]
+}
+
+model City {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  reports Report[]
+}
+
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  report Report[]
+}
+
+model StatusHistory {
+  id        Int          @id @default(autoincrement())
+  reportId  Int
+  status    ReportStatus
+  note      String?
+  createdAt DateTime     @default(now())
+
+  report    Report       @relation(fields: [reportId], references: [id])
+}
+
+enum ReportStatus {
+  NEW
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+}
+
