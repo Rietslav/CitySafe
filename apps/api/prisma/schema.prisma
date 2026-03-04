@@ -28,6 +28,8 @@ model Report {
   city        City            @relation(fields: [cityId], references: [id])
   category    Category        @relation(fields: [categoryId], references: [id])
   statusLogs  StatusHistory[]
+  attachments ReportAttachment[]
+  coordinate  Coordinate?
 }
 
 model City {
@@ -77,4 +79,23 @@ model User {
 enum Role {
   USER
   ADMIN
+}
+
+model Coordinate {
+  id        Int      @id @default(autoincrement())
+  latitude  Float
+  longitude Float
+  createdAt DateTime @default(now())
+
+  report   Report @relation(fields: [reportId], references: [id])
+  reportId Int    @unique
+}
+
+model ReportAttachment {
+  id        Int      @id @default(autoincrement())
+  reportId  Int
+  url       String
+  createdAt DateTime @default(now())
+
+  report    Report   @relation(fields: [reportId], references: [id])
 }
