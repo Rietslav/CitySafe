@@ -1,12 +1,14 @@
 import React from "react";
-import { Image, Pressable, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+
 import { CrossIcon, PersonalIcon, RaportIcon, SettingsIcon } from "../assets";
 import { colors } from "../theme/colors";
 
 type UserProfileScreenProps = {
   name: string;
   onBack: () => void;
-  onSignOut: () => void;
+  onSignOut: () => void | Promise<void>;
 };
 
 export function UserProfileScreen({ name, onBack, onSignOut }: UserProfileScreenProps) {

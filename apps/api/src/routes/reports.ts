@@ -1,9 +1,44 @@
 import { Router } from "express";
+import type { RequestHandler } from "express";
+import multer from "multer";
+import type { FileFilterCallback } from "multer";
 import { prisma } from "../prisma.js";
 import { requireAuth } from "../middleware/auth.js";
 import type { AuthRequest } from "../middleware/auth.js";
+import { uploadReportPhoto } from "../lib/s3.js";
 
 export const reportsRouter = Router();
+const storage = multer.memoryStorage();
+
+const upload = multer({
+  storage,
+  limits: { files: 3, fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb: FileFilterCallback) => {
+    if (!file.mimetype.startsWith("image/")) {
+      cb(new Error("Doar imaginile sunt permise"));
+      return;
+    }
+    cb(null, true);
+  }
+});
+
+const uploadPhotos: RequestHandler = (req, res, next) => {
+  const contentType = req.headers["content-type"] ?? "";
+  if (typeof contentType === "string" && !contentType.startsWith("multipart/form-data")) {
+    next();
+    return;
+  }
+
+  upload.array("photos", 3)(req, res, (err) => {
+    if (err) {
+      if (err instanceof multer.MulterError || err instanceof Error) {
+        return res.status(400).json({ error: err.message });
+      }
+      return next(err);
+    }
+    next();
+  });
+};
 
 // get /reports
 reportsRouter.get("/reports", async (req, res, next) => {
@@ -17,7 +52,7 @@ reportsRouter.get("/reports", async (req, res, next) => {
 
     const reports = await prisma.report.findMany({
       where,
-      include: { city: true, category: true },
+      include: { city: true, category: true, attachments: true, coordinate: true },
       orderBy: { createdAt: "desc" }
     });
 
@@ -28,12 +63,23 @@ reportsRouter.get("/reports", async (req, res, next) => {
 });
 
 // post /reports
-reportsRouter.post("/reports", requireAuth, async (req: AuthRequest, res, next) => {
+reportsRouter.post("/reports", requireAuth, uploadPhotos, async (req: AuthRequest, res, next) => {
   try {
-    const { title, description, cityId, categoryId } = req.body;
+    const { title, description, cityId, categoryId, latitude, longitude } = req.body;
 
     if (!title || !categoryId) {
       return res.status(400).json({ error: "title and categoryId are required" });
+    }
+
+    if (latitude === undefined || longitude === undefined) {
+      return res.status(400).json({ error: "latitude and longitude are required" });
+    }
+
+    const parsedLatitude = Number(latitude);
+    const parsedLongitude = Number(longitude);
+
+    if (!Number.isFinite(parsedLatitude) || !Number.isFinite(parsedLongitude)) {
+      return res.status(400).json({ error: "latitude and longitude must be numbers" });
     }
 
     const userId = Number(req.user?.sub);
@@ -59,6 +105,8 @@ reportsRouter.post("/reports", requireAuth, async (req: AuthRequest, res, next) 
       resolvedCityId = defaultCity.id;
     }
 
+    const files = Array.isArray(req.files) ? (req.files as multer.File[]) : [];
+
     const report = await prisma.report.create({
       data: {
         title,
@@ -67,13 +115,44 @@ reportsRouter.post("/reports", requireAuth, async (req: AuthRequest, res, next) 
         categoryId: Number(categoryId),
         userId: userId,
         status: "NEW",
+        coordinate: {
+          create: {
+            latitude: parsedLatitude,
+            longitude: parsedLongitude
+          }
+        },
         statusLogs: {
           create: { status: "NEW", note: "created" }
         }
       }
     });
 
-    res.status(201).json(report);
+    if (files.length) {
+      const uploads = await Promise.all(
+        files.map((file) =>
+          uploadReportPhoto({
+            buffer: file.buffer,
+            mimeType: file.mimetype,
+            originalName: file.originalname,
+            reportId: report.id
+          })
+        )
+      );
+
+      await prisma.reportAttachment.createMany({
+        data: uploads.map(({ url }) => ({
+          reportId: report.id,
+          url
+        }))
+      });
+    }
+
+    const reportWithRelations = await prisma.report.findUnique({
+      where: { id: report.id },
+      include: { city: true, category: true, attachments: true, coordinate: true }
+    });
+
+    res.status(201).json(reportWithRelations ?? report);
   } catch (e) {
     next(e);
   }

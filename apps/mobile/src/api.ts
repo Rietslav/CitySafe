@@ -94,16 +94,52 @@ export type CreateReportInput = {
   description?: string;
   cityId: number;
   categoryId: number;
+  latitude: number;
+  longitude: number;
 };
 
-export async function createReport(input: CreateReportInput) {
+export type ReportPhotoPayload = {
+  uri: string;
+  name: string;
+  type: string;
+};
+
+export async function createReport(input: CreateReportInput & { photos?: ReportPhotoPayload[] }) {
+  const { photos, ...rest } = input;
+  const hasPhotos = Array.isArray(photos) && photos.length > 0;
+  const headers: Record<string, string> = {
+    ...authHeaders()
+  };
+  let body: any;
+
+  if (hasPhotos) {
+    const formData = new FormData();
+    Object.entries(rest).forEach(([key, value]) => {
+      if (value === undefined || value === null) return;
+      formData.append(key, String(value));
+    });
+
+    photos?.forEach((photo) => {
+      formData.append(
+        "photos",
+        {
+          uri: photo.uri,
+          type: photo.type,
+          name: photo.name
+        } as any
+      );
+    });
+
+    body = formData;
+  } else {
+    headers["Content-Type"] = "application/json";
+    body = JSON.stringify(rest);
+  }
+
   const response = await fetch(`${API_BASE_URL}/reports`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...authHeaders()
-    },
-    body: JSON.stringify(input)
+    headers,
+    body
   });
 
   if (!response.ok) {

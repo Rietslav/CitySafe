@@ -1,5 +1,8 @@
 import React from "react";
-import { Image, Pressable, SafeAreaView, StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Pressable, StyleSheet, View } from "react-native";
+
+import MapLibreGL from "@maplibre/maplibre-react-native";
 import { colors } from "../theme/colors";
 import { AddIcon, MenuButtonIcon } from "../assets";
 
@@ -9,10 +12,17 @@ type MapScreenProps = {
 };
 
 export function MapScreen({ onOpenReport, onOpenProfile }: MapScreenProps) {
+  const center = [28.8638, 47.0105] as [number, number];
+  const initialCamera = {
+    centerCoordinate: center,
+    zoomLevel: 13
+  };
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={[]}>
       <View style={styles.mapWrapper}>
-        <Image source={require("../assets/map.png")} style={styles.map} />
+        <MapLibreGL.MapView style={styles.map} mapStyle={OSM_RASTER_STYLE} attributionEnabled>
+          <MapLibreGL.Camera defaultSettings={initialCamera} />
+        </MapLibreGL.MapView>
       </View>
 
       <Pressable style={styles.menuButton} onPress={onOpenProfile}>
@@ -29,7 +39,7 @@ export function MapScreen({ onOpenReport, onOpenProfile }: MapScreenProps) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   mapWrapper: { flex: 1 },
-  map: { ...StyleSheet.absoluteFillObject, resizeMode: "cover" },
+  map: { ...StyleSheet.absoluteFillObject },
 
   menuButton: {
     position: "absolute",
@@ -59,3 +69,22 @@ const styles = StyleSheet.create({
   },
   fabIcon: { width: 28, height: 28 }
 });
+
+const OSM_RASTER_STYLE = {
+  version: 8,
+  sources: {
+    osm: {
+      type: "raster",
+      tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+      tileSize: 256,
+      attribution: "© OpenStreetMap contributors"
+    }
+  },
+  layers: [
+    {
+      id: "osm",
+      type: "raster",
+      source: "osm"
+    }
+  ]
+} as const;

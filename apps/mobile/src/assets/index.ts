@@ -7,3 +7,4 @@ export { default as SettingsIcon } from "./settings.svg";
 export { default as RaportIcon } from "./raport.svg";
 export { default as CrossIcon } from "./cross.svg";
 export { default as AddIcon } from "./add.svg";
+export { default as MarkerIcon } from "./marker.svg";
