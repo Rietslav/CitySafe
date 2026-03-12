@@ -1,0 +1,93 @@
+{
+  "buildFiles": [
+    "/home/rietslav/projects/CitySafe/apps/mobile/node_modules/@react-native-async-storage/async-storage/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/home/rietslav/projects/CitySafe/apps/mobile/node_modules/@react-native-picker/picker/android/src/main/jni/CMakeLists.txt",
+    "/home/rietslav/projects/CitySafe/apps/mobile/node_modules/react-native-image-picker/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/home/rietslav/projects/CitySafe/apps/mobile/node_modules/react-native-safe-area-context/android/src/main/jni/CMakeLists.txt",
+    "/home/rietslav/projects/CitySafe/apps/mobile/node_modules/react-native-svg/android/src/main/jni/CMakeLists.txt",
+    "/home/rietslav/projects/CitySafe/apps/mobile/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/home/rietslav/Android/Sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/home/rietslav/projects/CitySafe/apps/mobile/android/app/.cxx/Debug/73t58288/x86_64",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/home/rietslav/Android/Sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/home/rietslav/projects/CitySafe/apps/mobile/android/app/.cxx/Debug/73t58288/x86_64",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "appmodules::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "x86_64",
+      "artifactName": "appmodules",
+      "output": "/home/rietslav/projects/CitySafe/apps/mobile/android/app/build/intermediates/cxx/Debug/73t58288/obj/x86_64/libappmodules.so",
+      "runtimeFiles": [
+        "/home/rietslav/projects/CitySafe/apps/mobile/android/app/build/intermediates/cxx/Debug/73t58288/obj/x86_64/libreact_codegen_rnpicker.so",
+        "/home/rietslav/projects/CitySafe/apps/mobile/android/app/build/intermediates/cxx/Debug/73t58288/obj/x86_64/libreact_codegen_rnsvg.so",
+        "/home/rietslav/projects/CitySafe/apps/mobile/android/app/build/intermediates/cxx/Debug/73t58288/obj/x86_64/libreact_codegen_safeareacontext.so",
+        "/home/rietslav/.gradle/caches/8.13/transforms/5a4fa8ef8d2ea5d84d321a2c8a409ee0/transformed/fbjni-0.7.0/prefab/modules/fbjni/libs/android.x86_64/libfbjni.so",
+        "/home/rietslav/.gradle/caches/8.13/transforms/a5eb6650aace0b6e4adedd8cab5789b7/transformed/react-android-0.83.1-debug/prefab/modules/jsi/libs/android.x86_64/libjsi.so",
+        "/home/rietslav/.gradle/caches/8.13/transforms/a5eb6650aace0b6e4adedd8cab5789b7/transformed/react-android-0.83.1-debug/prefab/modules/reactnative/libs/android.x86_64/libreactnative.so"
+      ]
+    },
+    "react_codegen_RNImagePickerSpec::@f66ee9a2efecfb28bee4": {
+      "toolchain": "toolchain",
+      "abi": "x86_64",
+      "artifactName": "react_codegen_RNImagePickerSpec"
+    },
+    "react_codegen_rnasyncstorage::@1596841e19ec5b9eeffe": {
+      "toolchain": "toolchain",
+      "abi": "x86_64",
+      "artifactName": "react_codegen_rnasyncstorage"
+    },
+    "react_codegen_rnpicker::@e8bb2e9e833f47d0d516": {
+      "toolchain": "toolchain",
+      "abi": "x86_64",
+      "artifactName": "react_codegen_rnpicker",
+      "output": "/home/rietslav/projects/CitySafe/apps/mobile/android/app/build/intermediates/cxx/Debug/73t58288/obj/x86_64/libreact_codegen_rnpicker.so",
+      "runtimeFiles": [
+        "/home/rietslav/.gradle/caches/8.13/transforms/a5eb6650aace0b6e4adedd8cab5789b7/transformed/react-android-0.83.1-debug/prefab/modules/reactnative/libs/android.x86_64/libreactnative.so",
+        "/home/rietslav/.gradle/caches/8.13/transforms/a5eb6650aace0b6e4adedd8cab5789b7/transformed/react-android-0.83.1-debug/prefab/modules/jsi/libs/android.x86_64/libjsi.so",
+        "/home/rietslav/.gradle/caches/8.13/transforms/5a4fa8ef8d2ea5d84d321a2c8a409ee0/transformed/fbjni-0.7.0/prefab/modules/fbjni/libs/android.x86_64/libfbjni.so"
+      ]
+    },
+    "react_codegen_rnsvg::@4f40eb209d0c0b4a3b65": {
+      "toolchain": "toolchain",
+      "abi": "x86_64",
+      "artifactName": "react_codegen_rnsvg",
+      "output": "/home/rietslav/projects/CitySafe/apps/mobile/android/app/build/intermediates/cxx/Debug/73t58288/obj/x86_64/libreact_codegen_rnsvg.so",
+      "runtimeFiles": [
+        "/home/rietslav/.gradle/caches/8.13/transforms/a5eb6650aace0b6e4adedd8cab5789b7/transformed/react-android-0.83.1-debug/prefab/modules/reactnative/libs/android.x86_64/libreactnative.so",
+        "/home/rietslav/.gradle/caches/8.13/transforms/a5eb6650aace0b6e4adedd8cab5789b7/transformed/react-android-0.83.1-debug/prefab/modules/jsi/libs/android.x86_64/libjsi.so",
+        "/home/rietslav/.gradle/caches/8.13/transforms/5a4fa8ef8d2ea5d84d321a2c8a409ee0/transformed/fbjni-0.7.0/prefab/modules/fbjni/libs/android.x86_64/libfbjni.so"
+      ]
+    },
+    "react_codegen_safeareacontext::@7984cd80db47aa7b952a": {
+      "toolchain": "toolchain",
+      "abi": "x86_64",
+      "artifactName": "react_codegen_safeareacontext",
+      "output": "/home/rietslav/projects/CitySafe/apps/mobile/android/app/build/intermediates/cxx/Debug/73t58288/obj/x86_64/libreact_codegen_safeareacontext.so",
+      "runtimeFiles": [
+        "/home/rietslav/.gradle/caches/8.13/transforms/5a4fa8ef8d2ea5d84d321a2c8a409ee0/transformed/fbjni-0.7.0/prefab/modules/fbjni/libs/android.x86_64/libfbjni.so",
+        "/home/rietslav/.gradle/caches/8.13/transforms/a5eb6650aace0b6e4adedd8cab5789b7/transformed/react-android-0.83.1-debug/prefab/modules/jsi/libs/android.x86_64/libjsi.so",
+        "/home/rietslav/.gradle/caches/8.13/transforms/a5eb6650aace0b6e4adedd8cab5789b7/transformed/react-android-0.83.1-debug/prefab/modules/reactnative/libs/android.x86_64/libreactnative.so"
+      ]
+    }
+  },
+  "toolchains": {
+    "toolchain": {
+      "cCompilerExecutable": "/home/rietslav/Android/Sdk/ndk/27.1.12297006/toolchains/llvm/prebuilt/linux-x86_64/bin/clang.lld",
+      "cppCompilerExecutable": "/home/rietslav/Android/Sdk/ndk/27.1.12297006/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++.lld"
+    }
+  },
+  "cFileExtensions": [],
+  "cppFileExtensions": [
+    "cpp"
+  ]
+}
