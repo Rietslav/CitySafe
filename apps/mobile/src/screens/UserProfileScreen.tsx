@@ -9,9 +9,10 @@ type UserProfileScreenProps = {
   name: string;
   onBack: () => void;
   onSignOut: () => void | Promise<void>;
+  onOpenReports: () => void;
 };
 
-export function UserProfileScreen({ name, onBack, onSignOut }: UserProfileScreenProps) {
+export function UserProfileScreen({ name, onBack, onSignOut, onOpenReports }: UserProfileScreenProps) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -36,27 +37,27 @@ export function UserProfileScreen({ name, onBack, onSignOut }: UserProfileScreen
               <View style={styles.iconBox}>
                 <PersonalIcon style={styles.listIcon} />
               </View>
-              <Text style={styles.listText}>Personal details</Text>
+              <Text style={styles.listText}>Date personale</Text>
             </View>
 
             <View style={styles.listItem}>
               <View style={styles.iconBox}>
                 <SettingsIcon style={styles.listIcon} />
               </View>
-              <Text style={styles.listText}>Settings and privacy</Text>
+              <Text style={styles.listText}>Setări și confidențialitate</Text>
             </View>
 
-            <View style={styles.listItem}>
+            <Pressable style={styles.listItem} onPress={onOpenReports}>
               <View style={styles.iconBox}>
                 <RaportIcon style={styles.listIcon} />
               </View>
-              <Text style={styles.listText}>Reports</Text>
-            </View>
+              <Text style={styles.listText}>Rapoarte</Text>
+            </Pressable>
           </View>
         </View>
 
         <Pressable style={styles.primary} onPress={onSignOut}>
-          <Text style={styles.primaryText}>Sign out</Text>
+          <Text style={styles.primaryText}>Deconectează-te</Text>
         </Pressable>
       </View>
     </SafeAreaView>

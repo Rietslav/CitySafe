@@ -1,7 +1,10 @@
 import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
+  ActivityIndicator,
   Image,
+  PermissionsAndroid,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -12,15 +15,19 @@ import {
 import { Picker } from "@react-native-picker/picker";
 import MapLibreGL from "@maplibre/maplibre-react-native";
 import { Asset, launchImageLibrary } from "react-native-image-picker";
+import Geolocation from "react-native-geolocation-service";
 import { City, Category, getCities, getCategories, createReport } from "../api";
 import { colors } from "../theme/colors";
 import { AddIcon, CrossIcon, MarkerIcon } from "../assets";
 
 type ReportScreenProps = {
   onBack: () => void;
+  onSuccess?: () => void;
 };
 
-export function ReportScreen({ onBack }: ReportScreenProps) {
+type CameraComponent = React.ComponentRef<typeof MapLibreGL.Camera>;
+
+export function ReportScreen({ onBack, onSuccess }: ReportScreenProps) {
   const [categories, setCategories] = React.useState<Category[]>([]);
   const [cityId, setCityId] = React.useState<number | null>(null);
   const [categoryId, setCategoryId] = React.useState<number | null>(null);
@@ -30,7 +37,12 @@ export function ReportScreen({ onBack }: ReportScreenProps) {
   const [photos, setPhotos] = React.useState<Asset[]>([]);
   const center = [28.8638, 47.0105] as [number, number];
   const [selectedCoordinate, setSelectedCoordinate] = React.useState<[number, number]>(center);
+  const [gpsCoordinate, setGpsCoordinate] = React.useState<[number, number] | null>(null);
+  const [locating, setLocating] = React.useState(true);
+  const [locationStatus, setLocationStatus] = React.useState<string | null>("Se obține poziția curentă...");
+  const [submitting, setSubmitting] = React.useState(false);
   const remainingPhotoSlots = Math.max(0, 3 - photos.length);
+  const cameraRef = React.useRef<CameraComponent | null>(null);
 
   React.useEffect(() => {
     const load = async () => {
@@ -40,11 +52,86 @@ export function ReportScreen({ onBack }: ReportScreenProps) {
         setCityId(chisinau?.id ?? cities[0]?.id ?? null);
         setCategories(cats);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load data");
+        setError(e instanceof Error ? e.message : "Nu am putut încărca datele.");
       }
     };
     load();
   }, []);
+
+  const ensureLocationPermission = React.useCallback(async () => {
+    try {
+      if (Platform.OS === "android") {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          {
+            title: "CitySafe are nevoie de locația ta",
+            message: "Folosim locația pentru a fixa rapid sesizarea pe hartă.",
+            buttonPositive: "Permite"
+          }
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      }
+
+      const status = await Geolocation.requestAuthorization("whenInUse");
+      return status === "granted" || status === "authorized";
+    } catch (permissionError) {
+      console.warn("request location permission", permissionError);
+      return false;
+    }
+  }, []);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    const pickLocation = async () => {
+      setLocating(true);
+      const allowed = await ensureLocationPermission();
+      if (cancelled) return;
+
+      if (!allowed) {
+        setLocationStatus("Permite accesul la locație pentru a poziționa sesizarea.");
+        setLocating(false);
+        return;
+      }
+
+      Geolocation.getCurrentPosition(
+        (position) => {
+          if (cancelled) return;
+          const { latitude, longitude } = position.coords;
+          const coord: [number, number] = [longitude, latitude];
+          setSelectedCoordinate(coord);
+          setGpsCoordinate(coord);
+          setLocationStatus(null);
+          setLocating(false);
+        },
+        (geoError) => {
+          if (cancelled) return;
+          console.warn("getCurrentPosition", geoError);
+          setLocationStatus("Nu am putut obține locația curentă.");
+          setLocating(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 5000
+        }
+      );
+    };
+
+    pickLocation();
+    return () => {
+      cancelled = true;
+    };
+  }, [ensureLocationPermission]);
+
+  React.useEffect(() => {
+    if (!gpsCoordinate) return;
+    cameraRef.current?.setCamera({
+      centerCoordinate: gpsCoordinate,
+      zoomLevel: 14,
+      animationDuration: 700
+    });
+  }, [gpsCoordinate]);
 
   const handleRegionDidChange = React.useCallback((feature: any) => {
     const coordinates = feature?.geometry?.coordinates;
@@ -97,6 +184,7 @@ export function ReportScreen({ onBack }: ReportScreenProps) {
       return;
     }
     setError(null);
+    setSubmitting(true);
     try {
       const formattedPhotos = photos
         .filter((asset): asset is Asset & { uri: string } => Boolean(asset.uri))
@@ -115,9 +203,15 @@ export function ReportScreen({ onBack }: ReportScreenProps) {
         longitude: selectedCoordinate[0],
         photos: formattedPhotos.length ? formattedPhotos : undefined
       });
+      setTitle("");
+      setDescription("");
+      setPhotos([]);
+      onSuccess?.();
       onBack();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to submit report");
+      setError(e instanceof Error ? e.message : "Nu am putut trimite sesizarea.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -125,7 +219,7 @@ export function ReportScreen({ onBack }: ReportScreenProps) {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Report</Text>
+          <Text style={styles.headerTitle}>Sesizare nouă</Text>
           <Pressable onPress={onBack} style={styles.close}>
             <CrossIcon style={styles.closeIcon} />
           </Pressable>
@@ -142,11 +236,19 @@ export function ReportScreen({ onBack }: ReportScreenProps) {
             onRegionDidChange={handleRegionDidChange}
           >
             <MapLibreGL.Camera
+              ref={cameraRef}
               defaultSettings={{
                 centerCoordinate: center,
                 zoomLevel: 13
               }}
             />
+            {gpsCoordinate ? (
+              <MapLibreGL.PointAnnotation id="user-location" coordinate={gpsCoordinate}>
+                <View style={styles.userLocationOuter}>
+                  <View style={styles.userLocationInner} />
+                </View>
+              </MapLibreGL.PointAnnotation>
+            ) : null}
           </MapLibreGL.MapView>
           <View pointerEvents="none" style={styles.centerMarker}>
             <MarkerIcon width={36} height={36} />
@@ -155,12 +257,17 @@ export function ReportScreen({ onBack }: ReportScreenProps) {
 
         <View style={styles.coordinatesRow}>
           <Text style={styles.coordinatesLabel}>Coordonate</Text>
-          <Text style={styles.coordinatesValue}>
-            {selectedCoordinate[1].toFixed(5)}, {selectedCoordinate[0].toFixed(5)}
-          </Text>
+          <View style={styles.coordinatesValueRow}>
+            {locating ? <ActivityIndicator size="small" color={colors.textSecondary} /> : null}
+            <Text style={styles.coordinatesValue}>
+              {selectedCoordinate[1].toFixed(5)}, {selectedCoordinate[0].toFixed(5)}
+            </Text>
+          </View>
         </View>
 
-        <Text style={styles.label}>Category</Text>
+        {locationStatus ? <Text style={styles.locationStatus}>{locationStatus}</Text> : null}
+
+        <Text style={styles.label}>Categorie</Text>
         <View style={styles.pickerWrapper}>
           <Picker
             selectedValue={categoryId ?? 0}
@@ -168,26 +275,26 @@ export function ReportScreen({ onBack }: ReportScreenProps) {
               setCategoryId(value === 0 ? null : Number(value))
             }
           >
-            <Picker.Item label="Select a category" value={0} />
+            <Picker.Item label="Selectează categoria" value={0} />
             {categories.map((cat) => (
               <Picker.Item key={cat.id} label={cat.name} value={cat.id} />
             ))}
           </Picker>
         </View>
 
-        <Text style={styles.label}>Title</Text>
+        <Text style={styles.label}>Titlu</Text>
         <TextInput
           style={styles.input}
-          placeholder="Add a short title"
+          placeholder="Adaugă un titlu scurt"
           placeholderTextColor={colors.placeholder}
           value={title}
           onChangeText={setTitle}
         />
 
-        <Text style={styles.label}>Description</Text>
+        <Text style={styles.label}>Descriere</Text>
         <TextInput
           style={[styles.input, styles.textArea]}
-          placeholder="Add more details"
+          placeholder="Adaugă mai multe detalii"
           placeholderTextColor={colors.placeholder}
           value={description}
           onChangeText={setDescription}
@@ -220,8 +327,8 @@ export function ReportScreen({ onBack }: ReportScreenProps) {
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        <Pressable style={styles.submit} onPress={submit}>
-          <Text style={styles.submitText}>Send</Text>
+        <Pressable style={[styles.submit, submitting ? styles.submitDisabled : null]} onPress={submit} disabled={submitting}>
+          <Text style={styles.submitText}>{submitting ? "Se trimite..." : "Trimite"}</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>
@@ -258,7 +365,9 @@ const styles = StyleSheet.create({
     marginTop: 8
   },
   coordinatesLabel: { fontWeight: "600", color: colors.textSecondary },
+  coordinatesValueRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   coordinatesValue: { fontVariant: ["tabular-nums"], color: colors.textPrimary },
+  locationStatus: { color: colors.textSecondary, marginTop: 4 },
   label: { fontWeight: "600", marginTop: 8, color: colors.textPrimary },
   pickerWrapper: {
     borderWidth: 1,
@@ -294,6 +403,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginTop: 6
   },
+  submitDisabled: { opacity: 0.7 },
   submitText: { fontWeight: "700", color: colors.textPrimary },
   error: { color: "#b91c1c", marginTop: 8 },
   photoGrid: {
@@ -323,7 +433,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center"
   },
-  photoRemoveIcon: { width: 14, height: 14 }
+  photoRemoveIcon: { width: 14, height: 14 },
+  userLocationOuter: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "rgba(0, 166, 166, 0.25)",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  userLocationInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.accent
+  }
 });
 
 const OSM_RASTER_STYLE = {

@@ -24,7 +24,7 @@ export function CitiesScreen() {
       const data = await getCities();
       setCities(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load cities");
+      setError(err instanceof Error ? err.message : "Nu am putut încărca orașele.");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -40,7 +40,7 @@ export function CitiesScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.center}>
           <ActivityIndicator size="large" />
-          <Text style={styles.muted}>Loading cities...</Text>
+          <Text style={styles.muted}>Se încarcă orașele...</Text>
         </View>
       </SafeAreaView>
     );
@@ -48,7 +48,7 @@ export function CitiesScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Cities</Text>
+      <Text style={styles.title}>Orașe</Text>
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <FlatList
         data={cities}
@@ -60,7 +60,7 @@ export function CitiesScreen() {
         )}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListEmptyComponent={
-          !error ? <Text style={styles.muted}>No cities yet.</Text> : null
+          !error ? <Text style={styles.muted}>Încă nu sunt orașe.</Text> : null
         }
         refreshControl={
           <RefreshControl

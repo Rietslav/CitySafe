@@ -5,6 +5,7 @@ import { MapScreen } from "./src/screens/MapScreen";
 import { ReportScreen } from "./src/screens/ReportScreen";
 import { GuestProfileScreen } from "./src/screens/GuestProfileScreen";
 import { UserProfileScreen } from "./src/screens/UserProfileScreen";
+import { MyReportsScreen } from "./src/screens/MyReportsScreen";
 import { SignInScreen } from "./src/screens/SignInScreen";
 import { SignUpScreen } from "./src/screens/SignUpScreen";
 import { loginUser, registerUser, setAuthToken, type AuthUser } from "./src/api";
@@ -14,7 +15,7 @@ type AuthenticatedUser = {
   email: string;
   firstName: string;
   lastName: string;
-  role: "USER" | "ADMIN";
+  role: "USER" | "ADMIN" | "MODERATOR";
 };
 
 type StoredAuth = {
@@ -30,10 +31,13 @@ export default function App() {
   const [showIntro, setShowIntro] = React.useState(true);
   const [currentUser, setCurrentUser] = React.useState<AuthenticatedUser | null>(null);
   const [screen, setScreen] = React.useState<
-    "map" | "report" | "profile" | "profileUser" | "signIn" | "signUp"
+    "map" | "report" | "profile" | "profileUser" | "myReports" | "signIn" | "signUp"
   >("map");
   const [pendingScreen, setPendingScreen] = React.useState<"report" | null>(null);
   const [bootstrapping, setBootstrapping] = React.useState(true);
+  const [reportFeedVersion, setReportFeedVersion] = React.useState(0);
+  const [myReportsFeedVersion, setMyReportsFeedVersion] = React.useState(0);
+  const [reportReturnScreen, setReportReturnScreen] = React.useState<"map" | "myReports">("map");
 
   React.useEffect(() => {
     const timer = setTimeout(() => setShowIntro(false), 1000);
@@ -108,12 +112,23 @@ export default function App() {
     }
   }, [screen, currentUser]);
 
+  const closeReportScreen = React.useCallback(() => {
+    setPendingScreen(null);
+    const destination = reportReturnScreen;
+    setScreen(destination);
+    setReportReturnScreen("map");
+    return destination;
+  }, [reportReturnScreen]);
+
   if (showIntro || bootstrapping) return <IntroScreen />;
 
   if (screen === "map") {
     return (
       <MapScreen
+        feedVersion={reportFeedVersion}
+        canSupportReports={Boolean(currentUser)}
         onOpenReport={() => {
+          setReportReturnScreen("map");
           if (!currentUser) {
             setPendingScreen("report");
             setScreen("signIn");
@@ -136,9 +151,13 @@ export default function App() {
     }
     return (
       <ReportScreen
-        onBack={() => {
-          setPendingScreen(null);
-          setScreen("map");
+        onBack={closeReportScreen}
+        onSuccess={() => {
+          setReportFeedVersion((value) => value + 1);
+          const destination = closeReportScreen();
+          if (destination === "myReports") {
+            setMyReportsFeedVersion((value) => value + 1);
+          }
         }}
       />
     );
@@ -162,7 +181,7 @@ export default function App() {
   if (screen === "profileUser") {
     const name = currentUser
       ? `${currentUser.firstName} ${currentUser.lastName}`.trim()
-      : "User";
+      : "Utilizator";
     return (
       <UserProfileScreen
         name={name}
@@ -174,8 +193,33 @@ export default function App() {
           setCurrentUser(null);
           setAuthToken(null);
           setPendingScreen(null);
+          setReportReturnScreen("map");
           await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
           setScreen("profile");
+        }}
+        onOpenReports={() => {
+          if (!currentUser) {
+            return;
+          }
+          setScreen("myReports");
+        }}
+      />
+    );
+  }
+
+  if (screen === "myReports") {
+    if (!currentUser) {
+      return null;
+    }
+    return (
+      <MyReportsScreen
+        currentUserId={currentUser.id}
+        feedVersion={myReportsFeedVersion}
+        onBack={() => setScreen("profileUser")}
+        onAddReport={() => {
+          setPendingScreen(null);
+          setReportReturnScreen("myReports");
+          setScreen("report");
         }}
       />
     );

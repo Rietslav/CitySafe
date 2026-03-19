@@ -1,5 +1,44 @@
 import { API_BASE_URL } from "./config";
 
+function isConnectionRefusedError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  return /network request failed|failed to fetch|connection (was )?refused/i.test(message);
+}
+
+function enrichConnectionRefusedMessage(url: string) {
+  const apiPort = url.match(/:(\d+)/)?.[1] ?? "4000";
+  return [
+    `Conexiune refuzata catre ${url}.`,
+    "Verifica daca serverul CitySafe ruleaza si este accesibil in aceeasi retea.",
+    "Pe Linux (Manjaro) deschide portul folosind, de exemplu, 'sudo ufw allow " + apiPort + "/tcp' sau regula echivalenta cu firewall-cmd.",
+    "Pe dispozitive Android fizice ruleaza 'adb reverse tcp:" + apiPort + " tcp:" + apiPort + "' daca vrei sa tunelizezi traficul prin USB."
+  ].join(" ");
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const hasLeadingSlash = path.startsWith("/");
+  const url = `${API_BASE_URL}${hasLeadingSlash ? "" : "/"}${path}`;
+
+  let response: Response;
+  try {
+    response = await fetch(url, init);
+  } catch (error) {
+    if (isConnectionRefusedError(error)) {
+      throw new Error(enrichConnectionRefusedMessage(url));
+    }
+    throw error;
+  }
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(
+      `Cererea ${(init?.method ?? "GET").toUpperCase()} ${path} a esuat (${response.status}): ${text}`
+    );
+  }
+
+  return response.json();
+}
+
 let authToken: string | null = null;
 
 export function setAuthToken(token: string | null) {
@@ -18,12 +57,7 @@ export type City = {
 };
 
 export async function getCities(): Promise<City[]> {
-  const response = await fetch(`${API_BASE_URL}/cities`);
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`GET /cities failed (${response.status}): ${text}`);
-  }
-  return response.json();
+  return request<City[]>("/cities");
 }
 
 export type Category = {
@@ -34,12 +68,7 @@ export type Category = {
 };
 
 export async function getCategories(): Promise<Category[]> {
-  const response = await fetch(`${API_BASE_URL}/categories`);
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`GET /categories failed (${response.status}): ${text}`);
-  }
-  return response.json();
+  return request<Category[]>("/categories");
 }
 
 export type AuthUser = {
@@ -47,7 +76,7 @@ export type AuthUser = {
   email: string;
   firstName: string;
   lastName: string;
-  role: "USER" | "ADMIN";
+  role: "USER" | "ADMIN" | "MODERATOR";
   token: string;
 };
 
@@ -57,36 +86,22 @@ export async function registerUser(input: {
   firstName: string;
   lastName: string;
 }): Promise<AuthUser> {
-  const response = await fetch(`${API_BASE_URL}/auth/register`, {
+  return request<AuthUser>("/auth/register", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input)
   });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`POST /auth/register failed (${response.status}): ${text}`);
-  }
-
-  return response.json();
 }
 
 export async function loginUser(input: {
   email: string;
   password: string;
 }): Promise<AuthUser> {
-  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+  return request<AuthUser>("/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input)
   });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`POST /auth/login failed (${response.status}): ${text}`);
-  }
-
-  return response.json();
 }
 
 export type CreateReportInput = {
@@ -102,6 +117,34 @@ export type ReportPhotoPayload = {
   uri: string;
   name: string;
   type: string;
+};
+
+export type ReportAttachment = {
+  id: number;
+  url: string;
+  createdAt: string;
+};
+
+export type ReportCoordinate = {
+  id: number;
+  latitude: number;
+  longitude: number;
+};
+
+export type Report = {
+  id: number;
+  title: string;
+  description?: string | null;
+  status: "WAITING" | "NEW" | "IN_PROGRESS" | "RESOLVED" | "REJECTED";
+  createdAt: string;
+  category?: Category;
+  city?: City;
+  coordinate?: ReportCoordinate | null;
+  attachments?: ReportAttachment[];
+  _count?: {
+    likes: number;
+  };
+  viewerHasLiked?: boolean;
 };
 
 export async function createReport(input: CreateReportInput & { photos?: ReportPhotoPayload[] }) {
@@ -136,16 +179,36 @@ export async function createReport(input: CreateReportInput & { photos?: ReportP
     body = JSON.stringify(rest);
   }
 
-  const response = await fetch(`${API_BASE_URL}/reports`, {
+  return request<Report>("/reports", {
     method: "POST",
     headers,
     body
   });
+}
 
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`POST /reports failed (${response.status}): ${text}`);
-  }
+export async function getReports(): Promise<Report[]> {
+  return request<Report[]>("/reports", {
+    headers: {
+      ...authHeaders()
+    }
+  });
+}
 
-  return response.json();
+export async function getMyReports(): Promise<Report[]> {
+  return request<Report[]>("/me/reports", {
+    headers: {
+      ...authHeaders()
+    }
+  });
+}
+
+export async function toggleReportLike(reportId: number): Promise<{ liked: boolean; count: number }> {
+  return request<{ liked: boolean; count: number }>(`/reports/${reportId}/like`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders()
+    },
+    body: JSON.stringify({})
+  });
 }

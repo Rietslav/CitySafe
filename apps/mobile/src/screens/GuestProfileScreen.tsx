@@ -25,7 +25,7 @@ export function GuestProfileScreen({ onBack, onSignIn }: GuestProfileScreenProps
             <View style={styles.avatar}>
               <Image source={require("../assets/avatar.png")} style={styles.avatarImage} />
             </View>
-            <Text style={styles.name}>Guest</Text>
+            <Text style={styles.name}>Vizitator</Text>
           </View>
 
           <View style={styles.divider} />
@@ -35,13 +35,13 @@ export function GuestProfileScreen({ onBack, onSignIn }: GuestProfileScreenProps
               <View style={styles.iconBox}>
                 <SettingsIcon style={styles.listIcon} />
               </View>
-              <Text style={styles.listText}>Settings and privacy</Text>
+              <Text style={styles.listText}>Setări și confidențialitate</Text>
             </View>
           </View>
         </View>
 
         <Pressable style={styles.primary} onPress={onSignIn}>
-          <Text style={styles.primaryText}>Sign in</Text>
+          <Text style={styles.primaryText}>Autentifică-te</Text>
         </Pressable>
       </View>
     </SafeAreaView>

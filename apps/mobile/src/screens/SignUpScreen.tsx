@@ -65,14 +65,14 @@ export function SignUpScreen({ onBack, onSignIn, onSubmit }: SignUpScreenProps) 
           <View style={styles.row}>
             <TextInput
               style={[styles.input, styles.inputHalf]}
-              placeholder="Firstname"
+              placeholder="Prenume"
               placeholderTextColor={colors.textSecondary}
               value={firstName}
               onChangeText={setFirstName}
             />
             <TextInput
               style={[styles.input, styles.inputHalf]}
-              placeholder="Lastname"
+              placeholder="Nume"
               placeholderTextColor={colors.textSecondary}
               value={lastName}
               onChangeText={setLastName}
@@ -91,7 +91,7 @@ export function SignUpScreen({ onBack, onSignIn, onSubmit }: SignUpScreenProps) 
 
           <TextInput
             style={styles.input}
-            placeholder="Password"
+            placeholder="Parolă"
             placeholderTextColor={colors.textSecondary}
             value={password}
             onChangeText={setPassword}
@@ -101,27 +101,27 @@ export function SignUpScreen({ onBack, onSignIn, onSubmit }: SignUpScreenProps) 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
           <Pressable style={styles.primary} onPress={submit}>
-            <Text style={styles.primaryText}>Register</Text>
+            <Text style={styles.primaryText}>Înregistrează-te</Text>
           </Pressable>
 
           <View style={styles.divider}>
             <View style={styles.line} />
-            <Text style={styles.dividerText}>or</Text>
+            <Text style={styles.dividerText}>sau</Text>
             <View style={styles.line} />
           </View>
 
           <Pressable style={styles.secondary} onPress={() => {}}>
             <View style={styles.googleRow}>
               <GoogleIcon style={styles.googleIcon} />
-              <Text style={styles.secondaryText}>Register with Google</Text>
+              <Text style={styles.secondaryText}>Înregistrează-te cu Google</Text>
             </View>
           </Pressable>
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.muted}>Already have an account?</Text>
+          <Text style={styles.muted}>Ai deja un cont?</Text>
           <Pressable onPress={onSignIn}>
-            <Text style={styles.link}>Login Now</Text>
+            <Text style={styles.link}>Autentifică-te</Text>
           </Pressable>
         </View>
       </ScrollView>

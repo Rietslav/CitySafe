@@ -14,7 +14,7 @@ export function ProfileScreen({ onBack, onSignIn }: ProfileScreenProps) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Profile</Text>
+        <Text style={styles.title}>Profil</Text>
         <Pressable onPress={onBack} style={styles.close}>
           <CrossIcon style={styles.closeIcon} />
         </Pressable>
@@ -23,21 +23,21 @@ export function ProfileScreen({ onBack, onSignIn }: ProfileScreenProps) {
       <View style={styles.content}>
         <View style={styles.card}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>G</Text>
+            <Text style={styles.avatarText}>V</Text>
           </View>
-          <Text style={styles.name}>Guest</Text>
-          <Text style={styles.muted}>You are browsing as a guest.</Text>
+          <Text style={styles.name}>Vizitator</Text>
+          <Text style={styles.muted}>Explorezi aplicația ca vizitator.</Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
+          <Text style={styles.sectionTitle}>Cont</Text>
           <Text style={styles.muted}>
-            Sign in to save reports and sync your activity.
+            Autentifică-te pentru a salva rapoarte și a-ți sincroniza activitatea.
           </Text>
         </View>
 
         <Pressable style={styles.primary} onPress={onSignIn}>
-          <Text style={styles.primaryText}>Sign in</Text>
+          <Text style={styles.primaryText}>Autentifică-te</Text>
         </Pressable>
       </View>
     </SafeAreaView>

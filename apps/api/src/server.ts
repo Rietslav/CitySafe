@@ -11,11 +11,27 @@ const app = express();
 
 app.use(express.json());
 
-const corsOrigin = process.env.CORS_ORIGIN?.split(",").map(s => s.trim()).filter(Boolean);
+const explicitCorsOrigins = process.env.CORS_ORIGIN?.split(",").map(s => s.trim()).filter(Boolean);
+const allowLocalRegex = /^https?:\/\/(localhost|127\.0\.0\.1|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/;
+
 app.use(
   cors({
-    origin: corsOrigin?.length ? corsOrigin : true,
-    credentials: true
+    credentials: true,
+    origin: (origin, callback) => {
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      if (explicitCorsOrigins?.includes(origin)) {
+        return callback(null, true);
+      }
+
+      if (process.env.NODE_ENV !== "production" && allowLocalRegex.test(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`Origin ${origin} nu este permis prin CORS`), false);
+    }
   })
 );
 

@@ -1,7 +1,8 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
-import { prisma } from "../prisma.js";
+import { Role } from "@prisma/client";
 import jwt from "jsonwebtoken";
+import { prisma } from "../prisma.js";
 import { requireAuth } from "../middleware/auth.js";
 import type { AuthRequest } from "../middleware/auth.js";
 
@@ -10,10 +11,21 @@ export const authRouter = Router();
 // post /auth/register
 authRouter.post("/register", async (req, res, next) => {
   try {
-    const { email, password, firstName, lastName } = req.body ?? {};
+    const { email, password, firstName, lastName, role } = req.body ?? {};
 
     if (!email || !password || !firstName || !lastName) {
       return res.status(400).json({ error: "email, password, firstName, lastName are required" });
+    }
+
+    const requestedRole = normalizeRole(role);
+    if (!requestedRole) {
+      return res.status(400).json({ error: "Rol invalid" });
+    }
+    if (requestedRole !== "USER") {
+      const creator = decodeTokenFromHeader(req.headers.authorization);
+      if (!creator || creator.role !== "ADMIN") {
+        return res.status(403).json({ error: "Doar administratorii pot crea conturi elevate" });
+      }
     }
 
     const normalizedEmail = String(email).trim().toLowerCase();
@@ -29,13 +41,13 @@ authRouter.post("/register", async (req, res, next) => {
         passwordHash,
         firstName: String(firstName).trim(),
         lastName: String(lastName).trim(),
-        role: "USER"
+        role: requestedRole
       },
       select: { id: true, email: true, firstName: true, lastName: true, role: true }
     });
 
     const token = jwt.sign(
-      { sub: user.id, role: user.role },
+      { sub: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET!,
       { expiresIn: "7d" }
     );
@@ -73,9 +85,10 @@ authRouter.post("/login", async (req, res, next) => {
       return res.status(401).json({ error: "Invalid credentials" });
     }
 
-    const token = jwt.sign({ sub: user.id, role: user.role },
+    const token = jwt.sign(
+      { sub: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET!,
-    { expiresIn: "7d" }
+      { expiresIn: "7d" }
     );
 
     res.json({
@@ -90,6 +103,26 @@ authRouter.post("/login", async (req, res, next) => {
     next(e);
   }
 });
+
+function normalizeRole(input: unknown): Role | null {
+  const allowed: Role[] = ["USER", "ADMIN", "MODERATOR"];
+  if (!input) return "USER";
+  const value = String(input).toUpperCase();
+  if (allowed.includes(value as Role)) {
+    return value as Role;
+  }
+  return null;
+}
+
+function decodeTokenFromHeader(header?: string) {
+  if (!header || !header.startsWith("Bearer ")) return null;
+  try {
+    const token = header.slice("Bearer ".length).trim();
+    return jwt.verify(token, process.env.JWT_SECRET ?? "") as { role?: Role };
+  } catch (_err) {
+    return null;
+  }
+}
 
 authRouter.get("/me", requireAuth, async (req: AuthRequest, res, next) => {
   try {

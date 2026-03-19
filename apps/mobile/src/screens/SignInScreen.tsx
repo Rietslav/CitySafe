@@ -60,7 +60,7 @@ export function SignInScreen({ onBack, onSignUp, onSubmit }: SignInScreenProps) 
 
           <TextInput
             style={styles.input}
-            placeholder="Password"
+            placeholder="Parolă"
             placeholderTextColor={colors.textSecondary}
             value={password}
             onChangeText={setPassword}
@@ -70,27 +70,27 @@ export function SignInScreen({ onBack, onSignUp, onSubmit }: SignInScreenProps) 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
           <Pressable style={styles.primary} onPress={submit}>
-            <Text style={styles.primaryText}>Login</Text>
+            <Text style={styles.primaryText}>Autentifică-te</Text>
           </Pressable>
 
           <View style={styles.divider}>
             <View style={styles.line} />
-            <Text style={styles.dividerText}>or</Text>
+            <Text style={styles.dividerText}>sau</Text>
             <View style={styles.line} />
           </View>
 
           <Pressable style={styles.secondary} onPress={() => {}}>
             <View style={styles.googleRow}>
               <GoogleIcon style={styles.googleIcon} />
-              <Text style={styles.secondaryText}>Login with Google</Text>
+              <Text style={styles.secondaryText}>Autentifică-te cu Google</Text>
             </View>
           </Pressable>
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.muted}>Don’t have an account?</Text>
+          <Text style={styles.muted}>Nu ai încă un cont?</Text>
           <Pressable onPress={onSignUp}>
-            <Text style={styles.link}>Register Now</Text>
+            <Text style={styles.link}>Înregistrează-te</Text>
           </Pressable>
         </View>
       </ScrollView>

@@ -18,7 +18,7 @@ model Report {
   description String?
   cityId      Int
   categoryId  Int
-  status      ReportStatus    @default(NEW)
+  status      ReportStatus    @default(WAITING)
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
@@ -30,6 +30,7 @@ model Report {
   statusLogs  StatusHistory[]
   attachments ReportAttachment[]
   coordinate  Coordinate?
+  likes       ReportLike[]
 }
 
 model City {
@@ -59,6 +60,7 @@ model StatusHistory {
 }
 
 enum ReportStatus {
+  WAITING
   NEW
   IN_PROGRESS
   RESOLVED
@@ -74,10 +76,12 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   reports      Report[]
+  reportLikes  ReportLike[]
 }
 
 enum Role {
   USER
+  MODERATOR
   ADMIN
 }
 
@@ -98,4 +102,16 @@ model ReportAttachment {
   createdAt DateTime @default(now())
 
   report    Report   @relation(fields: [reportId], references: [id])
+}
+
+model ReportLike {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  reportId  Int
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id])
+  report Report @relation(fields: [reportId], references: [id])
+
+  @@unique([userId, reportId])
 }
